@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI로 일합니다 — 마케팅팀 AI 업무 자동화 현황</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Hahmlet:wght@700;900&family=Nanum+Gothic:wght@400;700;800&family=DM+Mono:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: #FFFFFF;
+    color: #111111;
+    font-family: 'Nanum Gothic', sans-serif;
+    font-weight: 400;
+    overflow-x: hidden;
+  }
+
+  /* ── CURSOR ── */
+  * { cursor: none !important; }
+  #cur {
+    position: fixed; width: 10px; height: 10px;
+    background: #111; border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: width .15s, height .15s, background .2s;
+  }
+  #cur-ring {
+    position: fixed; width: 32px; height: 32px;
+    border: 1px solid rgba(17,17,17,0.22); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: width .25s, height .25s;
+  }
+  body.hov #cur { width: 18px; height: 18px; background: #E8440A; }
+  body.hov #cur-ring { width: 48px; height: 48px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 48px;
+    background: rgba(255,255,255,0.93);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #EBEBEB;
+  }
+  .nav-l {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .18em; text-transform: uppercase; color: #AAA;
+  }
+  .nav-r {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .18em; text-transform: uppercase; color: #CCC;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 140px 48px 80px;
+    border-bottom: 1px solid #EBEBEB;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .22em; text-transform: uppercase; color: #BBB;
+    margin-bottom: 28px;
+  }
+  .hero-title {
+    font-family: 'Hahmlet', serif; font-weight: 900;
+    font-size: clamp(72px, 12vw, 160px);
+    line-height: .92; letter-spacing: 0; color: #111;
+    margin-bottom: 40px;
+  }
+  .hero-title em { color: #E8440A; font-style: normal; }
+
+  .hero-body {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+    align-items: end; max-width: 960px;
+  }
+  .hero-desc {
+    font-size: 15px; line-height: 1.85; color: #666;
+  }
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    background: #EBEBEB; border: 1px solid #EBEBEB;
+  }
+  .h-stat {
+    background: #FFF; padding: 24px 20px;
+    text-align: center;
+  }
+  .h-stat-n {
+    font-family: 'Hahmlet', serif; font-weight: 900; font-size: 44px;
+    color: #111; line-height: 1;
+  }
+  .h-stat-l {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .14em; text-transform: uppercase; color: #BBB;
+    margin-top: 4px;
+  }
+
+  /* ── TICKER ── */
+  .ticker-wrap {
+    padding: 13px 0; overflow: hidden; white-space: nowrap;
+    border-bottom: 1px solid #EBEBEB;
+  }
+  .ticker { display: inline-flex; animation: tick 28s linear infinite; }
+  .ti {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .18em; text-transform: uppercase;
+    color: #CCC; padding: 0 32px;
+  }
+  .ti b { color: #E8440A; font-weight: 400; }
+  @keyframes tick { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+  /* ── SEC LABEL ── */
+  .sl {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .25em; text-transform: uppercase; color: #BBB;
+  }
+
+  /* ── FEATURED ── */
+  .featured {
+    padding: 80px 48px;
+    border-bottom: 1px solid #EBEBEB;
+  }
+  .sec-head { margin-bottom: 48px; }
+  .sec-head .sl { display: block; margin-bottom: 10px; }
+  .sec-head h2 {
+    font-family: 'Hahmlet', serif; font-weight: 900;
+    font-size: clamp(32px, 5vw, 56px);
+    color: #111; letter-spacing: 0;
+  }
+
+  .featured-grid {
+    display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px;
+  }
+  .fc {
+    background: #F6F6F6; border-radius: 4px; aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 32px 24px; text-align: center;
+    transition: transform .3s, box-shadow .3s;
+    position: relative; overflow: hidden;
+  }
+  .fc::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; background: #E8440A;
+    transform: scaleX(0); transition: transform .35s;
+  }
+  .fc:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,.07); }
+  .fc:hover::after { transform: scaleX(1); }
+  .fc-center { background: #F0F0F0; }
+
+  .fc-ico { font-size: 36px; margin-bottom: 14px; }
+  .fc-ico-lg { font-size: 52px; margin-bottom: 18px; }
+  .fc-title {
+    font-family: 'Hahmlet', serif; font-weight: 900; font-size: 22px;
+    letter-spacing: 0; color: #111; line-height: 1.1; margin-bottom: 8px;
+  }
+  .fc-title-lg {
+    font-family: 'Hahmlet', serif; font-weight: 900; font-size: 34px;
+    letter-spacing: 0; color: #111; line-height: 1.05; margin-bottom: 10px;
+  }
+  .fc-desc { font-size: 12px; color: #999; line-height: 1.65; margin-bottom: 14px; }
+  .fc-tags { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-bottom: 12px; }
+  .tag {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 8px; border: 1px solid #DDD; border-radius: 2px; color: #AAA;
+  }
+  .fc-result {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: #E8440A; letter-spacing: .04em;
+  }
+
+  /* ── MORE WORK ── */
+  .more { padding: 80px 48px; border-bottom: 1px solid #EBEBEB; }
+
+  .work-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  }
+  .wc {
+    background: #F7F7F7; border-radius: 4px; aspect-ratio: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 18px; text-align: center;
+    transition: transform .3s, box-shadow .3s, background .2s;
+    position: relative; overflow: hidden;
+  }
+  .wc::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; background: #E8440A;
+    transform: scaleX(0); transition: transform .35s;
+  }
+  .wc:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,.07); background: #FFF; }
+  .wc:hover::after { transform: scaleX(1); }
+
+  .wc-num { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .2em; color: #CCC; margin-bottom: 9px; }
+  .wc-ico { font-size: 26px; margin-bottom: 9px; }
+  .wc-title { font-family: 'Hahmlet', serif; font-weight: 900; font-size: 18px; letter-spacing: 0; color: #111; margin-bottom: 6px; line-height: 1.1; }
+  .wc-desc { font-size: 11px; color: #999; line-height: 1.6; margin-bottom: 10px; }
+  .wc-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 9px; }
+  .wc-tag { font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: .07em; text-transform: uppercase; padding: 2px 7px; border: 1px solid #E2E2E2; border-radius: 2px; color: #BBB; }
+  .wc-result { font-family: 'DM Mono', monospace; font-size: 10px; color: #E8440A; letter-spacing: .03em; }
+
+  /* 카카오 배너 강조 */
+  .wc-featured { background: #FFFDE7; border: 1px solid #FEE500; }
+  .wc-featured:hover { background: #FFFBCC; }
+  .wc-featured::after { background: #FEE500; }
+
+  /* 제작 중 카드 */
+  .wc-wip { opacity: 0.65; }
+  .wc-wip:hover { opacity: 1; }
+  .wc-wip-label { font-family: 'DM Mono', monospace; font-size: 10px; color: #BBB; letter-spacing: .05em; }
+
+  /* ── FULLPAGE SLIDES ── */
+  .fp-wrap {
+    position: relative;
+  }
+  /* 우측 도트 네비게이션 */
+  .fp-dots {
+    position: fixed;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .fp-dots.visible { opacity: 1; }
+  .fp-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #DDD;
+    transition: background .3s, transform .3s;
+    cursor: none;
+  }
+  .fp-dot.active { background: #111; transform: scale(1.4); }
+
+  .fp-slide {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid #EBEBEB;
+  }
+
+  /* 슬라이드 0: 타이틀 */
+  .fp-slide-0 { background: #111; }
+  .fp-slide-0 .slide-inner { text-align: center; }
+  .fp-s0-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.3);
+    margin-bottom: 28px;
+  }
+  .fp-s0-title {
+    font-family: 'Hahmlet', serif; font-weight: 900;
+    font-size: clamp(52px, 9vw, 120px);
+    line-height: .95; color: #FFF;
+    margin-bottom: 32px;
+  }
+  .fp-s0-title em { color: #E8440A; font-style: normal; }
+  .fp-s0-sub {
+    font-size: 15px; color: rgba(255,255,255,.4);
+    letter-spacing: .02em; margin-bottom: 56px;
+  }
+  .fp-s0-steps {
+    display: flex; gap: 12px; justify-content: center;
+  }
+  .fp-s0-step {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 8px 18px; border: 1px solid rgba(255,255,255,.15);
+    border-radius: 2px; color: rgba(255,255,255,.4);
+  }
+  .fp-scroll-hint {
+    position: absolute; bottom: 36px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .2em; text-transform: uppercase;
+    color: rgba(255,255,255,.2);
+  }
+  .fp-scroll-line {
+    width: 1px; height: 40px; background: rgba(255,255,255,.2);
+    animation: spulse 2s infinite;
+  }
+  @keyframes spulse {
+    0%,100%{transform:scaleY(1);opacity:.2} 50%{transform:scaleY(.4);opacity:.6}
+  }
+
+  /* 슬라이드 1: 문제 정의 */
+  .fp-slide-1 { background: #FAFAFA; }
+
+  /* 슬라이드 2: AI와 설계 */
+  .fp-slide-2 { background: #FFF; }
+
+  /* 슬라이드 3: 운영 및 수정 */
+  .fp-slide-3 { background: #111; }
+
+  /* 공통 슬라이드 레이아웃 */
+  .slide-inner {
+    width: 100%; max-width: 1080px;
+    padding: 0 80px;
+  }
+  .slide-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .slide-left {}
+  .slide-step-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: .25em; text-transform: uppercase;
+    color: #BBB; margin-bottom: 16px; display: block;
+  }
+  .slide-step-label.light { color: rgba(255,255,255,.3); }
+  .slide-num {
+    font-family: 'Hahmlet', serif; font-weight: 900;
+    font-size: clamp(100px, 16vw, 200px);
+    line-height: .85; color: #EBEBEB;
+    margin-bottom: -16px;
+  }
+  .slide-num.dark { color: rgba(255,255,255,.06); }
+  .slide-title {
+    font-family: 'Hahmlet', serif; font-weight: 900;
+    font-size: clamp(36px, 5vw, 64px);
+    line-height: 1.05; color: #111;
+    margin-bottom: 24px;
+  }
+  .slide-title.light { color: #FFF; }
+  .slide-title em { color: #E8440A; font-style: normal; }
+  .slide-desc {
+    font-size: 15px; line-height: 1.9; color: #666;
+    margin-bottom: 32px;
+  }
+  .slide-desc.light { color: rgba(255,255,255,.5); }
+  .slide-quote {
+    padding: 20px 24px;
+    border-left: 2px solid #E8440A;
+    background: #FFF;
+    font-size: 14px; line-height: 1.75; color: #444;
+    font-style: italic;
+  }
+  .slide-quote.dark-q {
+    background: rgba(255,255,255,.04);
+    color: rgba(255,255,255,.5);
+    border-left-color: #E8440A;
+  }
+
+  /* 오른쪽 시각 요소 */
+  .slide-right {}
+  .slide-visual {
+    background: #F0F0F0; border-radius: 4px;
+    padding: 40px 36px;
+    height: 360px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .slide-visual.dark-v { background: rgba(255,255,255,.05); }
+  .sv-item {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid #E8E8E8;
+  }
+  .sv-item:last-child { border-bottom: none; }
+  .sv-item.dv { border-bottom-color: rgba(255,255,255,.06); }
+  .sv-icon {
+    font-size: 20px; flex-shrink: 0; margin-top: 2px;
+  }
+  .sv-text {}
+  .sv-t {
+    font-family: 'Hahmlet', serif; font-weight: 900;
+    font-size: 14px; color: #111; margin-bottom: 4px;
+  }
+  .sv-t.light { color: #FFF; }
+  .sv-d { font-size: 12px; color: #999; line-height: 1.55; }
+  .sv-d.light { color: rgba(255,255,255,.35); }
+
+  /* ── CLOSING ── */
+  .closing {
+    padding: 100px 48px;
+    text-align: center;
+  }
+  .closing .sl { display: block; margin-bottom: 20px; }
+  .closing-msg {
+    font-size: 15px; line-height: 1.9; color: #666;
+    max-width: 580px; margin: 0 auto;
+  }
+  .closing-msg strong { color: #111; font-weight: 500; }
+
+  /* 슬라이드 내 콘텐츠 진입 애니메이션 */
+  .fp-slide .slide-inner { opacity: 0; transform: translateY(32px); transition: opacity .7s ease, transform .7s ease; }
+  .fp-slide.in-view .slide-inner { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 768px) {
+    .fp-slide { height: auto; min-height: 100vh; padding: 80px 0; }
+    .slide-inner { padding: 0 24px; }
+    .slide-layout { grid-template-columns: 1fr; gap: 40px; }
+    .slide-num { font-size: 80px; }
+    .fp-dots { display: none; }
+    .fp-s0-steps { flex-direction: column; align-items: center; }
+  }
+
+  /* ── REVEAL ── */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .65s ease, transform .65s ease; }
+  .reveal.on { opacity: 1; transform: translateY(0); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    nav { padding: 18px 20px; }
+    .hero { padding: 100px 20px 56px; }
+    .hero-body { grid-template-columns: 1fr; gap: 32px; }
+    .featured, .more, .process, .stack, .closing { padding: 56px 20px; }
+    .featured-grid { grid-template-columns: 1fr; }
+    .fc:not(.fc-center) { display: none; }
+    .work-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .process-steps { grid-template-columns: 1fr; gap: 32px; }
+    .stack-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-l">마케팅팀 AI 자동화 현황</span>
+  <span class="nav-r">2026.03</span>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">Marketing Team · AI Workflow Report · 2026</p>
+  <h1 class="hero-title">AI로<br><em>일합니다</em></h1>
+  <div class="hero-body">
+    <p class="hero-desc">
+      마케팅 팀은 반복 업무를 제거하고 의사결정 속도를 높이기 위해
+      AI 기반 자동화 서비스를 직접 기획하고 구현해 운영 중입니다.
+      외주 개발 없이, 업무 현장에서 필요를 느낀 사람이 직접 만들었습니다.
+    </p>
+    <div class="hero-stats">
+      <div class="h-stat">
+        <div class="h-stat-n">7</div>
+        <div class="h-stat-l">운영 서비스</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-n">0원</div>
+        <div class="h-stat-l">외주 개발비</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-n">24/7</div>
+        <div class="h-stat-l">자동 운영</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-n">90%</div>
+        <div class="h-stat-l">보고 시간 절감</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <span class="ti"><b>★</b> Claude API</span>
+    <span class="ti"><b>★</b> Python</span>
+    <span class="ti"><b>★</b> Firebase</span>
+    <span class="ti"><b>★</b> Google Apps Script</span>
+    <span class="ti"><b>★</b> GA4</span>
+    <span class="ti"><b>★</b> Telegram Bot</span>
+    <span class="ti"><b>★</b> Shopify Liquid</span>
+    <span class="ti"><b>★</b> HTML / CSS / JS</span>
+    <span class="ti"><b>★</b> Claude API</span>
+    <span class="ti"><b>★</b> Python</span>
+    <span class="ti"><b>★</b> Firebase</span>
+    <span class="ti"><b>★</b> Google Apps Script</span>
+    <span class="ti"><b>★</b> GA4</span>
+    <span class="ti"><b>★</b> Telegram Bot</span>
+    <span class="ti"><b>★</b> Shopify Liquid</span>
+    <span class="ti"><b>★</b> HTML / CSS / JS</span>
+  </div>
+</div>
+
+<!-- ALL WORK -->
+<section class="more">
+  <div class="sec-head reveal">
+    <span class="sl">Live · 운영 중</span>
+    <h2>서비스 목록</h2>
+  </div>
+  <div class="work-grid reveal">
+
+    <div class="wc">
+      <div class="wc-num">01</div>
+      <div class="wc-ico">📦</div>
+      <div class="wc-title">재고 현황 페이지</div>
+      <div class="wc-desc">스태프 입력 → 고객 화면 Firebase 실시간 반영. GA4 이벤트 트래킹 내장</div>
+      <div class="wc-tags"><span class="wc-tag">Firebase</span><span class="wc-tag">JS</span><span class="wc-tag">GA4</span></div>
+      <div class="wc-result">→ 현장 재고 문의 제로화</div>
+    </div>
+
+    <div class="wc wc-featured">
+      <div class="wc-num">02</div>
+      <div class="wc-ico">💛</div>
+      <div class="wc-title">카카오 배너<br>제작 메이커</div>
+      <div class="wc-desc">카카오 선물하기 배너 17종 체크리스트 + 카피 입력 → 엑셀 요청서 자동 출력</div>
+      <div class="wc-tags"><span class="wc-tag">React</span><span class="wc-tag">SheetJS</span><span class="wc-tag">Tailwind</span></div>
+      <div class="wc-result">→ 디자이너 요청 프로세스 표준화</div>
+    </div>
+
+    <div class="wc">
+      <div class="wc-num">03</div>
+      <div class="wc-ico">🤖</div>
+      <div class="wc-title">팀 업무 매니지먼트<br>라인 봇</div>
+      <div class="wc-desc">LINE Messaging API 연동. 업무 알림·공지·일정 리마인더를 팀 채널에 자동 발송</div>
+      <div class="wc-tags"><span class="wc-tag">LINE API</span><span class="wc-tag">Apps Script</span><span class="wc-tag">Sheets</span></div>
+      <div class="wc-result">→ 팀 커뮤니케이션 자동화</div>
+    </div>
+
+    <div class="wc">
+      <div class="wc-num">04</div>
+      <div class="wc-ico">📊</div>
+      <div class="wc-title">AI 마케팅 자동보고</div>
+      <div class="wc-desc">GA4 데이터 자동 수집 → Claude 분석 → 주간 보고서 자동 생성·발행</div>
+      <div class="wc-tags"><span class="wc-tag">Apps Script</span><span class="wc-tag">Claude API</span><span class="wc-tag">GA4</span></div>
+      <div class="wc-result">→ 보고 작성 시간 90% 단축</div>
+    </div>
+
+    <div class="wc">
+      <div class="wc-num">05</div>
+      <div class="wc-ico">📈</div>
+      <div class="wc-title">데이터 기입 자동화</div>
+      <div class="wc-desc">인스타그램 API 연동 → 게시물별 콘텐츠 데이터 + 팔로워 수 구글 시트 자동 기록</div>
+      <div class="wc-tags"><span class="wc-tag">Instagram API</span><span class="wc-tag">Apps Script</span><span class="wc-tag">Sheets</span></div>
+      <div class="wc-result">→ 수동 집계 완전 제거</div>
+    </div>
+
+  </div>
+
+  <div class="sec-head reveal" style="margin-top:72px;">
+    <span class="sl">In Progress · 제작 중</span>
+    <h2>다음 서비스</h2>
+  </div>
+  <div class="work-grid reveal">
+
+    <div class="wc wc-wip">
+      <div class="wc-num">06</div>
+      <div class="wc-ico">🎮</div>
+      <div class="wc-title">팝업 대기 게임</div>
+      <div class="wc-desc">팝업 방문객이 대기 중 플레이하는 미니게임. 브랜드 경험 강화</div>
+      <div class="wc-tags"><span class="wc-tag">HTML/CSS/JS</span><span class="wc-tag">Canvas</span></div>
+      <div class="wc-result wc-wip-label">— 제작 중</div>
+    </div>
+
+    <div class="wc wc-wip">
+      <div class="wc-num">07</div>
+      <div class="wc-ico">🧮</div>
+      <div class="wc-title">팝업 메모장<br>(계산기)</div>
+      <div class="wc-desc">팝업 현장 스태프용 메모·계산 복합 툴. 빠른 금액 계산과 메모 동시 처리</div>
+      <div class="wc-tags"><span class="wc-tag">HTML/CSS/JS</span></div>
+      <div class="wc-result wc-wip-label">— 제작 중</div>
+    </div>
+
+    <div class="wc wc-wip">
+      <div class="wc-num">08</div>
+      <div class="wc-ico">🛍️</div>
+      <div class="wc-title">이달의 발굴템<br>기획전 + 어드민</div>
+      <div class="wc-desc">월별 추천 상품 기획전 페이지 + 상품 등록·관리 어드민 페이지 세트</div>
+      <div class="wc-tags"><span class="wc-tag">Firebase</span><span class="wc-tag">HTML/CSS/JS</span></div>
+      <div class="wc-result wc-wip-label">— 제작 중</div>
+    </div>
+
+    <div class="wc wc-wip">
+      <div class="wc-num">09</div>
+      <div class="wc-ico">📉</div>
+      <div class="wc-title">광고 데이터<br>대시보드</div>
+      <div class="wc-desc">매체별 광고 성과를 한 화면에서 비교·분석. 리포팅 자동화 목표</div>
+      <div class="wc-tags"><span class="wc-tag">GA4</span><span class="wc-tag">Meta API</span><span class="wc-tag">JS</span></div>
+      <div class="wc-result wc-wip-label">— 제작 중</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FULLPAGE SLIDES: 어떻게 만드나요 -->
+<div class="fp-wrap" id="fp-wrap">
+
+  <!-- 도트 네비 -->
+  <div class="fp-dots" id="fp-dots">
+    <div class="fp-dot" data-idx="0"></div>
+    <div class="fp-dot" data-idx="1"></div>
+    <div class="fp-dot" data-idx="2"></div>
+    <div class="fp-dot" data-idx="3"></div>
+  </div>
+
+  <!-- 슬라이드 0: 타이틀 -->
+  <div class="fp-slide fp-slide-0" data-slide="0">
+    <div class="slide-inner">
+      <p class="fp-s0-eyebrow">How We Build · 어떻게 만드나요</p>
+      <div class="fp-s0-title">마케터가<br><em>직접</em> 만드는<br>방법</div>
+      <p class="fp-s0-sub">기획 → 설계 → 구현 → 운영까지 혼자서</p>
+      <div class="fp-s0-steps">
+        <span class="fp-s0-step">01 · 문제 정의</span>
+        <span class="fp-s0-step">02 · AI와 설계</span>
+        <span class="fp-s0-step">03 · 운영 및 수정</span>
+      </div>
+    </div>
+    <div class="fp-scroll-hint">
+      <div class="fp-scroll-line"></div>
+      scroll
+    </div>
+  </div>
+
+  <!-- 슬라이드 1: 문제 정의 -->
+  <div class="fp-slide fp-slide-1" data-slide="1">
+    <div class="slide-inner">
+      <div class="slide-layout">
+        <div class="slide-left">
+          <span class="slide-step-label">Step 01 · 문제 정의</span>
+          <div class="slide-num">01</div>
+          <h2 class="slide-title">불편함을<br>포착한다</h2>
+          <p class="slide-desc">
+            자동화는 기술에서 시작하지 않습니다.<br>
+            "이걸 매번 손으로 해야 하나?" 싶은 순간,
+            그 불편함이 곧 프로젝트의 씨앗이 됩니다.<br><br>
+            기능 목록을 먼저 쓰지 않습니다.
+            <strong style="color:#111">"이게 없어지면 얼마나 편해질까?"</strong>를 먼저 묻습니다.
+          </p>
+          <div class="slide-quote">
+            "인스타 데이터 매주 복붙하는 데 30분씩 쓰고 있었는데,<br>
+            이게 자동화 1순위라는 걸 알았습니다."
+          </div>
+        </div>
+        <div class="slide-right">
+          <div class="slide-visual">
+            <div class="sv-item">
+              <div class="sv-icon">😤</div>
+              <div class="sv-text">
+                <div class="sv-t">반복 작업 발견</div>
+                <div class="sv-d">매주 같은 데이터를 같은 시트에 복붙하고 있다면, 그건 자동화 신호</div>
+              </div>
+            </div>
+            <div class="sv-item">
+              <div class="sv-icon">🎯</div>
+              <div class="sv-text">
+                <div class="sv-t">해결 범위 정의</div>
+                <div class="sv-d">완벽한 시스템 말고, 지금 당장 고통을 줄이는 최소 기능부터</div>
+              </div>
+            </div>
+            <div class="sv-item">
+              <div class="sv-icon">📝</div>
+              <div class="sv-text">
+                <div class="sv-t">한 문장으로 요약</div>
+                <div class="sv-d">"○○를 하면 ○○가 자동으로 된다" — 이게 명확해야 시작할 수 있다</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 슬라이드 2: AI와 설계 -->
+  <div class="fp-slide fp-slide-2" data-slide="2">
+    <div class="slide-inner">
+      <div class="slide-layout">
+        <div class="slide-left">
+          <span class="slide-step-label">Step 02 · AI와 설계</span>
+          <div class="slide-num">02</div>
+          <h2 class="slide-title">Claude에게<br><em>말을</em><br>건다</h2>
+          <p class="slide-desc">
+            코드를 몰라도 됩니다. 마케터의 언어로
+            문제를 설명하면 Claude가 구조를 잡아줍니다.<br><br>
+            어떤 기술 스택이 맞는지, 어떻게 데이터가
+            흘러야 하는지 — 함께 설계하면서 나도 이해합니다.
+          </p>
+          <div class="slide-quote">
+            "인스타 API로 팔로워 수 뽑아서 구글 시트에 자동으로
+            넣고 싶어" — 이 한 마디로 시작했습니다.
+          </div>
+        </div>
+        <div class="slide-right">
+          <div class="slide-visual">
+            <div class="sv-item">
+              <div class="sv-icon">🧠</div>
+              <div class="sv-text">
+                <div class="sv-t">Claude API · Anthropic</div>
+                <div class="sv-d">기획 의도 설명 → 구조 설계 → 코드 초안 생성. 마케터 언어를 개발 언어로 번역</div>
+              </div>
+            </div>
+            <div class="sv-item">
+              <div class="sv-icon">🏗️</div>
+              <div class="sv-text">
+                <div class="sv-t">아키텍처 결정</div>
+                <div class="sv-d">Firebase냐 Sheets냐, Apps Script냐 Python이냐 — 상황에 맞는 스택을 같이 고릅니다</div>
+              </div>
+            </div>
+            <div class="sv-item">
+              <div class="sv-icon">⚡</div>
+              <div class="sv-text">
+                <div class="sv-t">빠른 프로토타입</div>
+                <div class="sv-d">설계 → 코드 초안까지 보통 1시간 이내. 일단 돌아가는 것부터 만들고 다듬는다</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 슬라이드 3: 운영 및 수정 -->
+  <div class="fp-slide fp-slide-3" data-slide="3">
+    <div class="slide-inner">
+      <div class="slide-layout">
+        <div class="slide-left">
+          <span class="slide-step-label light">Step 03 · 운영 및 수정</span>
+          <div class="slide-num dark">03</div>
+          <h2 class="slide-title light">만들고<br><em>부딪히고</em><br>고친다</h2>
+          <p class="slide-desc light">
+            완성된 코드를 실무에 바로 투입합니다.
+            오류가 나면 에러 메시지를 그대로 Claude에 붙여넣고,
+            함께 고칩니다.<br><br>
+            코드를 이해하는 만큼 더 잘 고칩니다.
+            그래서 복붙이 아니라 이해하면서 씁니다.
+          </p>
+          <div class="slide-quote dark-q">
+            "돌아가는 게 완벽한 것보다 낫다. 부서지면 그때 고치면 된다."
+          </div>
+        </div>
+        <div class="slide-right">
+          <div class="slide-visual dark-v">
+            <div class="sv-item dv">
+              <div class="sv-icon">🚀</div>
+              <div class="sv-text">
+                <div class="sv-t light">실무 즉시 투입</div>
+                <div class="sv-d light">완성도 70%여도 일단 씁니다. 현장 피드백이 가장 빠른 테스트</div>
+              </div>
+            </div>
+            <div class="sv-item dv">
+              <div class="sv-icon">🔧</div>
+              <div class="sv-text">
+                <div class="sv-t light">오류 = 다음 질문</div>
+                <div class="sv-d light">에러 메시지 복붙 → Claude와 디버깅. 고칠 때마다 코드를 더 이해하게 됨</div>
+              </div>
+            </div>
+            <div class="sv-item dv">
+              <div class="sv-icon">🔁</div>
+              <div class="sv-text">
+                <div class="sv-t light">반복 개선</div>
+                <div class="sv-d light">쓰면서 불편한 점이 보입니다. 그게 다음 버전의 요구사항이 됩니다</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /fp-wrap -->
+
+<!-- CLOSING -->
+<section class="closing">
+  <span class="sl">앞으로의 방향</span>
+  <p class="closing-msg" style="margin-top:20px;">
+    지금까지 만든 서비스는 모두 <strong>업무 현장의 필요에서 시작</strong>했습니다.
+    앞으로도 반복을 제거하고, 데이터를 자동화하고,
+    <strong>마케터가 창의적인 일에만 집중</strong>할 수 있는 환경을 만들어 가겠습니다.
+  </p>
+</section>
+
+<script>
+  // ── CURSOR ──
+  const cur=document.getElementById('cur'), ring=document.getElementById('cur-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=mx+'px'; cur.style.top=my+'px';
+  });
+  (function loop(){ rx+=(mx-rx)*.1; ry+=(my-ry)*.1; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(loop); })();
+  document.querySelectorAll('.fc,.wc,.fp-dot').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('hov'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('hov'));
+  });
+
+  // ── SCROLL REVEAL ──
+  const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target);}});},{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+  // ── FULLPAGE SLIDES ──
+  const slides = document.querySelectorAll('.fp-slide');
+  const dots   = document.querySelectorAll('.fp-dot');
+  const dotsWrap = document.getElementById('fp-dots');
+  const fpWrap   = document.getElementById('fp-wrap');
+
+  // 슬라이드 진입 애니메이션 + 도트 활성화
+  const slideObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in-view');
+        const idx = entry.target.dataset.slide;
+        dots.forEach(d => d.classList.toggle('active', d.dataset.idx === idx));
+      }
+    });
+  }, { threshold: 0.5 });
+
+  slides.forEach(s => slideObs.observe(s));
+
+  // fp-wrap 진입 시 도트 표시
+  const wrapObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      dotsWrap.classList.toggle('visible', e.isIntersecting);
+    });
+  }, { threshold: 0.01 });
+  wrapObs.observe(fpWrap);
+
+  // 도트 클릭 시 해당 슬라이드로 스크롤
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const target = document.querySelector(`.fp-slide[data-slide="${dot.dataset.idx}"]`);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
