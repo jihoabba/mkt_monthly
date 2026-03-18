@@ -53,13 +53,21 @@
   }
   .pres-nav-l {
     font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.3);
-    text-shadow: 0 1px 4px rgba(0,0,0,.4);
+    letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5);
+    text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    transition: color .3s, text-shadow .3s;
   }
   .pres-nav-r {
     font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.3);
-    text-shadow: 0 1px 4px rgba(0,0,0,.4);
+    letter-spacing: .22em; text-transform: uppercase; color: rgba(255,255,255,.5);
+    text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    transition: color .3s, text-shadow .3s;
+  }
+  /* light slide nav */
+  .pres-nav.on-light .pres-nav-l,
+  .pres-nav.on-light .pres-nav-r {
+    color: rgba(0,0,0,.5);
+    text-shadow: none;
   }
 
   /* ── DOTS ── */
@@ -829,7 +837,28 @@
     </div>
   </div>
 
-  <!-- ═══════ SLIDE 10 · CLOSING ═══════ -->
+  <!-- ═══════ SLIDE 10 · MOCKUP 1 ═══════ -->
+  <div class="slide s-dark" data-idx="9">
+    <div class="img-slide-wrap">
+      <img src="img/mockup1.jpg" alt="Mockup 1">
+    </div>
+  </div>
+
+  <!-- ═══════ SLIDE 11 · MOCKUP 2 ═══════ -->
+  <div class="slide s-dark" data-idx="10">
+    <div class="img-slide-wrap">
+      <img src="img/mockup2.jpg" alt="Mockup 2">
+    </div>
+  </div>
+
+  <!-- ═══════ SLIDE 12 · MOCKUP 3 ═══════ -->
+  <div class="slide s-dark" data-idx="11">
+    <div class="img-slide-wrap">
+      <img src="img/mockup3.jpg" alt="Mockup 3">
+    </div>
+  </div>
+
+  <!-- ═══════ SLIDE 13 · CLOSING ═══════ -->
   <div class="slide s-dark" data-idx="9">
     <div class="s9-inner">
       <span class="eyebrow dim" style="margin-bottom:32px;">앞으로의 방향 · Direction</span>
@@ -886,11 +915,15 @@
     setTimeout(() => { isAnimating = false; }, 750);
   }
 
+  const nav = document.querySelector('.pres-nav');
+
   function updateUI() {
     counter.textContent = String(current + 1).padStart(2,'0') + ' / ' + String(TOTAL).padStart(2,'0');
     arrPrev.classList.toggle('disabled', current === 0);
     arrNext.classList.toggle('disabled', current === TOTAL - 1);
     document.querySelectorAll('.pres-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    const isLight = slides[current].classList.contains('s-white') || slides[current].classList.contains('s-light');
+    nav.classList.toggle('on-light', isLight);
   }
 
   arrPrev.addEventListener('click', () => goTo(current - 1));
